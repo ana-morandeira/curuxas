@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="gl">
+<html lang="ca">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -245,7 +245,7 @@ const T = {
 const load=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v===null?d:v}catch(e){return d}};
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 let over=load("curuxas_coords",{}), visited=load("curuxas",[]), edit=load("curuxas_edit",false);
-let lang=load("curuxas_lang",null); if(lang!=="gl"&&lang!=="ca") lang=/^ca/i.test(navigator.language||"")?"ca":"gl";
+let lang=load("curuxas_lang",null); if(lang!=="gl"&&lang!=="ca") lang="ca";
 let userPos=null, selected=null, watchId=null, markers={}, me=null, arrivedNow=new Set();
 const $=id=>document.getElementById(id);
 const tr=k=>T[lang][k];
