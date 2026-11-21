@@ -1,5 +1,5 @@
 // Cambia VERSION cada vez que modifiques archivos para forzar la actualización.
-const VERSION = "v16";
+const VERSION = "v17";
 const APP = "curuxas-app-" + VERSION;
 const TILES = "curuxas-tiles";
 const MAX_TILES = 1500;

@@ -169,6 +169,12 @@ button.primary,a.btn.primary{background:linear-gradient(#8a7660,#6b5a48);box-sha
 #lang{display:flex;gap:4px}
 #lang button{min-height:30px;padding:2px 9px;font-size:.75rem}
 #lang button[aria-pressed="true"]{background:#6b5a48;color:#f6eedb;border-color:#6b5a48}
+
+/* ---- Footer ---- */
+#panel{padding-bottom:12px}
+#foot{flex:none;text-align:center;padding:6px 18px calc(6px + env(safe-area-inset-bottom,0px));font:.72rem var(--type);border-top:1px solid rgba(139,122,95,.35);background:rgba(245,236,214,.7)}
+#foot a{color:#6b5a48;text-decoration:none;border-bottom:1px solid rgba(107,90,72,.4)}
+#foot a:hover,#foot a:focus-visible{color:#4a3e30;border-bottom-color:#4a3e30;outline:none}
 </style>
 </head>
 <body>
@@ -179,6 +185,7 @@ button.primary,a.btn.primary{background:linear-gradient(#8a7660,#6b5a48);box-sha
   <div id="offline" hidden style="background:#d9a441;color:#1d2433;font-size:.8rem;padding:4px 18px"></div>
   <div id="map"></div>
   <section id="panel" aria-live="polite"></section>
+  <footer id="foot"><a id="readme" href="https://github.com/ana-morandeira/curuxas#readme" target="_blank" rel="noopener"></a></footer>
 </div>
 <script src="leaflet/leaflet.js"></script>
 <script>
@@ -221,7 +228,7 @@ const PLACES = [
 
 const DEFAULT_RADIUS = 100;
 const T = {
- gl:{progress:(a,b)=>a+" de "+b+" visitados", next:"Seguinte parada", watchOff:"Activar seguimento", watchOn:"Seguimento activo",
+ gl:{about:"Sobre o proxecto · README", progress:(a,b)=>a+" de "+b+" visitados", next:"Seguinte parada", watchOff:"Activar seguimento", watchOn:"Seguimento activo",
   visited:"Visitado", away:"a", editOn:"Modo edición", editOff:"Saír do modo edición",
   none:"Aínda non capturaches coordenadas.", capLabel:"Coordenadas capturadas (cópiaas e envíamas para fixalas na app):",
   reset:"Borrar o progreso das visitas", back:"← Todos os lugares", arrived:"Chegaches a este lugar.",
@@ -231,7 +238,7 @@ const T = {
   noGeo:"O teu navegador non permite a xeolocalización.", precision:a=>"A precisión é de ±"+a+" m. Gardar igualmente?",
   saved:a=>"Gardado (±"+a+" m).", noLoc:"Non se puido obter a localización.", noLocPerm:"Non se puido obter a túa localización. Revisa os permisos.",
   offline:"Sen conexión: móstrase o mapa gardado."},
- ca:{progress:(a,b)=>a+" de "+b+" visitats", next:"Propera parada", watchOff:"Activar seguiment", watchOn:"Seguiment actiu",
+ ca:{about:"Sobre el projecte · README", progress:(a,b)=>a+" de "+b+" visitats", next:"Propera parada", watchOff:"Activar seguiment", watchOn:"Seguiment actiu",
   visited:"Visitat", away:"a", editOn:"Mode edició", editOff:"Sortir del mode edició",
   none:"Encara no has capturat coordenades.", capLabel:"Coordenades capturades (copia-les i envia-me-les per fixar-les a l'app):",
   reset:"Esborrar el progrés de les visites", back:"← Tots els llocs", arrived:"Has arribat a aquest lloc.",
@@ -245,7 +252,7 @@ const T = {
 const load=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v===null?d:v}catch(e){return d}};
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 let over=load("curuxas_coords",{}), visited=load("curuxas",[]), edit=load("curuxas_edit",false);
-let lang=load("curuxas_lang",null); if(lang!=="gl"&&lang!=="ca") lang="ca";
+let lang=load("curuxas_lang",null); if(lang!=="gl"&&lang!=="ca") lang="ca"; // idioma por defecto: catalán
 let userPos=null, selected=null, watchId=null, markers={}, me=null, arrivedNow=new Set();
 const $=id=>document.getElementById(id);
 const tr=k=>T[lang][k];
@@ -371,7 +378,7 @@ function toggleWatch(){
 // ---- Idioma ----
 function applyLang(){
   document.documentElement.lang=lang;
-  $("offline").textContent=tr("offline");
+  $("offline").textContent=tr("offline"); $("readme").textContent=tr("about");
   document.querySelectorAll("#lang button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.l===lang)));
 }
 function setLang(l){lang=l;save("curuxas_lang",l);applyLang();if(selected)showDetail(selected);else showList();}
