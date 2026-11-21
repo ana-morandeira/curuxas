@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="gl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ruta Curuxás</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#efe4cb">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="leaflet/leaflet.css">
+<style>
+@font-face{font-family:"Old Standard TT";font-weight:400;font-style:normal;font-display:swap;src:url(fonts/old-standard-tt-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Old Standard TT";font-weight:400;font-style:italic;font-display:swap;src:url(fonts/old-standard-tt-latin-400-italic.woff2) format("woff2")}
+@font-face{font-family:"Old Standard TT";font-weight:700;font-style:normal;font-display:swap;src:url(fonts/old-standard-tt-latin-700-normal.woff2) format("woff2")}
+@font-face{font-family:"Special Elite";font-weight:400;font-style:normal;font-display:swap;src:url(fonts/special-elite-latin-400-normal.woff2) format("woff2")}
+
+:root{--bg:#efe3c8;--ink:#3b2f22;--moss:#5f6e3a;--dusk:#4a3524;--amber:#c9972f;--line:#cdb88a;--red:#8c2f26;
+--sans:system-ui,-apple-system,"Segoe UI",sans-serif;--serif:Georgia,"Times New Roman",serif}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:var(--sans);color:var(--ink);background:var(--bg)}
+#app{display:flex;flex-direction:column;height:100%}
+header{padding:12px 18px;background:var(--dusk);color:var(--bg);display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+header h1{font:600 1.3rem var(--serif);margin:0}
+header span{font-size:.85rem;opacity:.85}
+#map{flex:1;min-height:0;position:relative;background:#e6d5ae;border:1px solid #4a3524;box-shadow:0 0 0 3px #efe3c8,0 0 0 4px #4a3524;margin:8px 10px}
+#panel{background:var(--bg);border-top:1px solid var(--amber);padding:14px 18px calc(14px + env(safe-area-inset-bottom,0px));max-height:55%;overflow:auto}
+#panel h2{font:600 1.25rem var(--serif);margin:0 0 6px}
+#panel p{font:400 1rem/1.55 var(--serif);margin:0 0 12px;max-width:62ch}
+.meta{font-size:.85rem;color:#58604f;margin-bottom:10px}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+button,a.btn{font:600 .95rem var(--sans);min-height:46px;padding:10px 14px;border-radius:0;border:1px solid var(--dusk);background:transparent;color:var(--dusk);text-decoration:none;cursor:pointer;display:inline-flex;align-items:center}
+button.primary,a.btn.primary{background:var(--dusk);color:var(--bg)}
+button.on{background:var(--moss);border-color:var(--moss);color:#fff}
+button:focus-visible,a.btn:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.box{background:#e4d3ab;border-left:2px solid var(--moss);padding:10px 12px;border-radius:0;font-size:.92rem;margin-bottom:12px}
+.box.arrive{background:#f0d98f;border-color:var(--amber);font-weight:600}
+.row{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+.row:focus-visible{outline:3px solid var(--amber)}
+.num{flex:none;width:30px;height:30px;border-radius:0;background:var(--dusk);color:var(--bg);display:grid;place-items:center;font:600 .85rem var(--sans)}
+.num.visited{background:var(--moss)}
+.row b{display:block}.row small{color:#58604f}
+.pin{width:28px;height:28px;border-radius:0;background:var(--dusk);color:var(--bg);border:2px solid var(--bg);box-shadow:0 1px 4px #0006;display:grid;place-items:center;font:600 .85rem var(--sans)}
+.pin.visited{background:var(--moss)}.pin.sel{background:var(--amber);color:var(--ink)}
+textarea{width:100%;height:120px;font:12px/1.4 ui-monospace,monospace}
+.back{margin-bottom:8px;min-height:40px}
+
+/* ---- Estilo de época ---- */
+html,body{background:var(--bg) radial-gradient(ellipse at top,#f4ead3 0%,#e9d9b4 100%)}
+header{border-bottom:1px solid var(--amber)}
+header h1{font-variant:small-caps;letter-spacing:.08em}
+#panel{background:linear-gradient(#efe3c8,#e9d9b4);border-top:1px solid var(--dusk)}
+#panel h2{letter-spacing:.02em}
+.leaflet-tile-pane{filter:sepia(.8) saturate(.55) contrast(.9) brightness(1.04) hue-rotate(-10deg)}
+#map::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:450;box-shadow:inset 0 0 70px rgba(96,60,20,.5)}
+.leaflet-control-attribution{border-radius:0!important;background:rgba(239,227,200,.85)!important}
+.leaflet-container{background:#e6d5ae;font-family:var(--serif)}
+.pin{background:var(--red);border:1px solid #efe3c8;box-shadow:0 0 0 1px var(--red),0 2px 4px #0006;font-family:var(--serif)}
+.pin.visited{background:var(--moss);box-shadow:0 0 0 1px var(--moss),0 2px 4px #0006}
+.pin.sel{background:var(--amber);color:#3b2f22;box-shadow:0 0 0 1px var(--amber),0 2px 4px #0006}
+.num{background:var(--red);font-family:var(--serif)}.num.visited{background:var(--moss)}
+button,a.btn{font-family:var(--serif);letter-spacing:.02em}
+
+/* ---- Efecto acuarela ---- */
+:root{--red:#98432f;--moss:#6f7d4a;--grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .36 0 0 0 0 .26 0 0 0 0 .12 0 0 0 .22 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")}
+html,body{background:
+ radial-gradient(60% 35% at 12% 8%,rgba(201,151,47,.30),transparent 70%),
+ radial-gradient(45% 35% at 88% 28%,rgba(111,125,74,.24),transparent 70%),
+ radial-gradient(65% 45% at 35% 96%,rgba(152,67,47,.18),transparent 70%),
+ linear-gradient(#f3e9d0,#e8d8b2)}
+#app::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:900;background:var(--grain);mix-blend-mode:multiply}
+header{background:
+ radial-gradient(40% 120% at 20% 0%,rgba(201,151,47,.35),transparent 70%),
+ radial-gradient(40% 120% at 85% 100%,rgba(152,67,47,.30),transparent 70%),
+ linear-gradient(100deg,#5a4634,#6a5238 50%,#4f3d2c)}
+#panel{background:
+ radial-gradient(55% 60% at 10% 0%,rgba(201,151,47,.22),transparent 70%),
+ radial-gradient(45% 60% at 95% 100%,rgba(111,125,74,.20),transparent 70%),
+ linear-gradient(#f1e6cb,#e9d9b4)}
+.leaflet-tile-pane{filter:sepia(.55) saturate(.75) contrast(.82) brightness(1.07) hue-rotate(-12deg) blur(.4px)}
+#map::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:440;mix-blend-mode:multiply;background:
+ radial-gradient(40% 35% at 20% 25%,rgba(201,151,47,.30),transparent 70%),
+ radial-gradient(35% 40% at 80% 70%,rgba(111,125,74,.28),transparent 70%),
+ radial-gradient(30% 30% at 60% 15%,rgba(152,67,47,.16),transparent 70%)}
+#map::after{box-shadow:inset 0 0 60px rgba(120,80,30,.38)}
+.pin,.num{filter:url(#wc);background:radial-gradient(circle at 30% 30%,#b4634f,#98432f 75%);box-shadow:inset 0 0 6px rgba(60,20,10,.55),0 2px 4px rgba(60,40,10,.35)}
+.pin.visited,.num.visited{background:radial-gradient(circle at 30% 30%,#8d9b64,#6f7d4a 75%)}
+.pin.sel{background:radial-gradient(circle at 30% 30%,#e0bb62,#c9972f 75%);box-shadow:inset 0 0 6px rgba(90,60,10,.5),0 2px 4px rgba(60,40,10,.35)}
+button.primary,a.btn.primary{background:linear-gradient(#6a5238,#4a3524)}
+.box{background:linear-gradient(90deg,rgba(111,125,74,.18),rgba(228,211,171,.9))}
+.box.arrive{background:linear-gradient(90deg,rgba(201,151,47,.35),rgba(240,217,143,.9))}
+
+/* ---- Tipografía de época ---- */
+:root{--serif:"Old Standard TT",Georgia,"Times New Roman",serif;--type:"Special Elite","Courier New",monospace}
+html,body{font-family:var(--serif)}
+header h1{font-weight:700;letter-spacing:.06em}
+#panel h2{font-weight:700}
+.meta,header span,.row small,.box,#note,#offline,textarea{font-family:var(--type)}
+.meta,.row small{font-size:.8rem}
+.box{font-size:.85rem;line-height:1.5}
+button,a.btn{font-family:var(--type);font-size:.85rem;letter-spacing:0}
+.pin,.num{font-family:var(--type);font-size:.8rem}
+.row b{font-family:var(--serif);font-size:1.05rem}
+
+/* ---- Acuarela suave ---- */
+:root{--bg:#f3ead3;--ink:#4a3e30;--dusk:#6b5a48;--line:#d8c9a4;--amber:#d9bb7a;--red:#a8594a;--moss:#8a9668}
+html,body{background:
+ radial-gradient(55% 35% at 10% 6%,rgba(217,187,122,.38),transparent 70%),
+ radial-gradient(45% 35% at 92% 24%,rgba(143,163,168,.30),transparent 70%),
+ radial-gradient(55% 40% at 30% 70%,rgba(138,150,104,.22),transparent 70%),
+ radial-gradient(60% 45% at 85% 98%,rgba(168,89,74,.16),transparent 70%),
+ linear-gradient(#f6eedb,#ece0c3)}
+#app::after{opacity:.7}
+header{color:var(--ink);border-bottom:1px solid #b9a57c;background:
+ radial-gradient(45% 160% at 12% 0%,rgba(217,187,122,.60),transparent 70%),
+ radial-gradient(40% 160% at 58% 100%,rgba(143,163,168,.42),transparent 70%),
+ radial-gradient(40% 160% at 96% 0%,rgba(168,89,74,.26),transparent 70%),
+ linear-gradient(#f3e9cf,#ebdfc0)}
+#panel{border-top:1px solid #b9a57c;background:
+ radial-gradient(55% 70% at 8% 0%,rgba(217,187,122,.34),transparent 70%),
+ radial-gradient(45% 70% at 96% 100%,rgba(143,163,168,.30),transparent 70%),
+ radial-gradient(40% 60% at 55% 55%,rgba(138,150,104,.14),transparent 70%),
+ linear-gradient(#f3eacf,#eadcbb)}
+#map{border-color:#4a3524;background:#e6d5ae;box-shadow:0 0 0 3px #efe3c8,0 0 0 4px #4a3524}
+.leaflet-tile-pane{filter:sepia(.55) saturate(.75) contrast(.82) brightness(1.07) hue-rotate(-12deg) blur(.4px)}
+#map::before{background:
+ radial-gradient(40% 35% at 20% 25%,rgba(201,151,47,.30),transparent 70%),
+ radial-gradient(35% 40% at 80% 70%,rgba(111,125,74,.28),transparent 70%),
+ radial-gradient(30% 30% at 60% 15%,rgba(152,67,47,.16),transparent 70%)}
+#map::after{box-shadow:inset 0 0 60px rgba(120,80,30,.38)}
+.pin,.num{background:radial-gradient(circle at 30% 30%,#c58b7c,#a8594a 78%);box-shadow:inset 0 0 6px rgba(90,50,40,.35),0 2px 4px rgba(90,70,40,.28)}
+.pin.visited,.num.visited{background:radial-gradient(circle at 30% 30%,#b3bd96,#8a9668 78%)}
+.pin.sel{background:radial-gradient(circle at 30% 30%,#efdba6,#d9bb7a 78%);color:#4a3e30;box-shadow:inset 0 0 6px rgba(120,90,30,.35),0 2px 4px rgba(90,70,40,.28)}
+button.primary,a.btn.primary{background:linear-gradient(#7d6a55,#6b5a48);color:#f6eedb}
+button,a.btn{border-color:#8b7a5f;color:#5a4a3a}
+button.primary,a.btn.primary{border-color:#6b5a48}
+.box{background:linear-gradient(90deg,rgba(138,150,104,.18),rgba(238,226,196,.92))}
+.box.arrive{background:linear-gradient(90deg,rgba(217,187,122,.45),rgba(242,228,185,.92))}
+
+/* ---- Acuarela intensa (todo menos el mapa) ---- */
+html,body{background:#f5edd9}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;will-change:transform;filter:url(#wcw);background:
+ radial-gradient(ellipse 58% 34% at 12% 10%,rgba(217,187,122,0.42) 0,rgba(217,187,122,0.36) 62%,rgba(190,148,70,0.6) 70%,rgba(217,187,122,0) 76%),
+ radial-gradient(ellipse 46% 32% at 92% 26%,rgba(143,163,168,0.4) 0,rgba(143,163,168,0.34) 62%,rgba(104,130,138,0.55) 70%,rgba(143,163,168,0) 76%),
+ radial-gradient(ellipse 52% 30% at 22% 58%,rgba(138,150,104,0.38) 0,rgba(138,150,104,0.32) 62%,rgba(104,120,70,0.52) 70%,rgba(138,150,104,0) 76%),
+ radial-gradient(ellipse 55% 34% at 88% 92%,rgba(168,89,74,0.3) 0,rgba(168,89,74,0.24) 62%,rgba(138,64,52,0.46) 70%,rgba(168,89,74,0) 76%),
+ radial-gradient(ellipse 36% 22% at 10% 96%,rgba(217,187,122,0.34) 0,rgba(217,187,122,0.28) 62%,rgba(190,148,70,0.48) 70%,rgba(217,187,122,0) 76%),
+ radial-gradient(ellipse 34% 22% at 70% 52%,rgba(143,163,168,0.26) 0,rgba(143,163,168,0.2) 62%,rgba(104,130,138,0.4) 70%,rgba(143,163,168,0) 76%)}
+#app{position:relative;z-index:1}
+#app::after{opacity:.85}
+header{background:rgba(246,238,219,.38);box-shadow:inset 0 -14px 24px -14px rgba(138,120,80,.35)}
+#panel{background:rgba(245,236,214,.58)}
+.box{background:linear-gradient(90deg,rgba(138,150,104,.30),rgba(238,226,196,.80))}
+.box.arrive{background:linear-gradient(90deg,rgba(217,187,122,.60),rgba(242,228,185,.85))}
+.row{border-bottom:1px solid rgba(139,122,95,.35)}
+button.primary,a.btn.primary{background:linear-gradient(#8a7660,#6b5a48);box-shadow:inset 0 0 8px rgba(40,25,10,.25)}
+
+/* ---- Papel desdoblado ---- */
+#folds{position:fixed;inset:0;z-index:0;opacity:.6;pointer-events:none;filter:url(#wcr);background:
+ linear-gradient(90deg,transparent calc(34% - 28px),rgba(110,80,40,.07) calc(34% - 10px),rgba(110,80,40,.24) calc(34% - 1px),rgba(255,251,238,.60) calc(34% + 1px),rgba(255,251,238,.20) calc(34% + 6px),transparent calc(34% + 24px)),
+ linear-gradient(90deg,transparent calc(67% - 24px),rgba(255,251,238,.20) calc(67% - 6px),rgba(255,251,238,.60) calc(67% - 1px),rgba(110,80,40,.24) calc(67% + 1px),rgba(110,80,40,.07) calc(67% + 10px),transparent calc(67% + 28px)),
+ linear-gradient(180deg,transparent calc(48% - 28px),rgba(110,80,40,.07) calc(48% - 10px),rgba(110,80,40,.24) calc(48% - 1px),rgba(255,251,238,.60) calc(48% + 1px),rgba(255,251,238,.20) calc(48% + 6px),transparent calc(48% + 24px)),
+ linear-gradient(118deg,transparent calc(58% - 14px),rgba(110,80,40,.12) calc(58% - 1px),rgba(255,251,238,.30) 58%,transparent calc(58% + 10px)),
+ radial-gradient(circle 80px at 34% 48%,rgba(255,250,235,.34),transparent 70%),
+ radial-gradient(circle 80px at 67% 48%,rgba(255,250,235,.30),transparent 70%),
+ linear-gradient(90deg,rgba(120,90,40,0) 34%,rgba(120,90,40,.05) 34% 67%,rgba(255,250,235,.07) 67% 100%)}
+
+/* ---- Selector de idioma ---- */
+.hr{display:flex;align-items:center;gap:10px}
+#lang{display:flex;gap:4px}
+#lang button{min-height:30px;padding:2px 9px;font-size:.75rem}
+#lang button[aria-pressed="true"]{background:#6b5a48;color:#f6eedb;border-color:#6b5a48}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="wc" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".06" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="3"/></filter><filter id="wcw" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".012 .016" numOctaves="3" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="46"/><feGaussianBlur stdDeviation=".6"/></filter><filter id="wcr" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".008 .02" numOctaves="2" seed="11" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="14"/></filter></svg>
+<div id="folds" aria-hidden="true"></div>
+<div id="app">
+  <header><h1>Ruta Curuxás</h1><div class="hr"><span id="progress"></span><div id="lang" role="group" aria-label="Galego · Català"></div></div></header>
+  <div id="offline" hidden style="background:#d9a441;color:#1d2433;font-size:.8rem;padding:4px 18px"></div>
+  <div id="map"></div>
+  <section id="panel" aria-live="polite"></section>
+</div>
+<script src="leaflet/leaflet.js"></script>
+<script>
+// ====== EDITA AQUÍ: los lugares del libro ======
+// Cada texto tiene versión en gallego (gl) y catalán (ca).
+// approx:true = coordenadas aproximadas (pendientes de afinar sobre el terreno).
+const PLACES = [
+  {id:"vilouriz", name:"Vilouriz (Toques)", lat:42.945, lng:-7.985, radius:500, approx:true,
+   short:{gl:"Aquí naceu Ramón Rodríguez Varela en 1905.", ca:"Aquí va néixer Ramón Rodríguez Varela el 1905."},
+   info:{gl:"Ramón Rodríguez Varela, Curuxás, naceu en Vilouriz, parroquia de Toques, cara a 1905. Con uns dez anos marchou cos seus pais a Palas de Rei, onde traballaron como caseiros no campo.",
+         ca:"Ramón Rodríguez Varela, Curuxás, va néixer a Vilouriz, parròquia de Toques, cap al 1905. Amb uns deu anys se'n va anar amb els pares a Palas de Rei, on van treballar com a masovers al camp."},
+   extra:{gl:"Contido extra: fotos do lugar, audio ou fragmento autorizado do libro.", ca:"Contingut extra: fotos del lloc, àudio o fragment autoritzat del llibre."}},
+  {id:"pambre", name:"Pambre (Palas de Rei)", lat:42.850, lng:-7.920, radius:500, approx:true,
+   short:{gl:"Un tramo da súa infancia.", ca:"Un tram de la seva infantesa."},
+   info:{gl:"Segundo testemuños recollidos na comarca, de neno Ramón viviu unha tempada en Pambre, onde recibiu clases antes de ser coñecido como Curuxás. Dato por confirmar co libro.",
+         ca:"Segons testimonis recollits a la comarca, de petit Ramón va viure una temporada a Pambre, on va rebre classes abans de ser conegut com a Curuxás. Dada per confirmar amb el llibre."},
+   extra:{gl:"Contido extra: o castelo de Pambre e o seu contorno.", ca:"Contingut extra: el castell de Pambre i el seu entorn."}},
+  {id:"curuxas", name:"Curuxás (Palas de Rei)", lat:42.862, lng:-7.895, radius:500, approx:true,
+   short:{gl:"O lugar que lle deu o alcume.", ca:"El lloc que li va donar el malnom."},
+   info:{gl:"Nesta aldea próxima a Palas de Rei pasou a mocidade e fíxose adulto. Dela tomou o alcume co que se faría famoso na Ulloa e na Terra de Melide.",
+         ca:"En aquesta aldea propera a Palas de Rei va passar la joventut i es va fer adult. D'ella va prendre el malnom amb què es faria famós a la Ulloa i a la Terra de Melide."},
+   extra:{gl:"Contido extra: historia da aldea e da súa familia.", ca:"Contingut extra: història de l'aldea i de la seva família."}},
+  {id:"melide", name:"Melide", lat:42.9139, lng:-8.0136, radius:300, approx:false,
+   short:{gl:"Capital da comarca onde se move a lenda.", ca:"Capital de la comarca on es mou la llegenda."},
+   info:{gl:"Melide é o centro da comarca onde actuou a partida guerrilleira de Curuxás e onde naceu o seu biógrafo, Carlos Parrado. O libro presentouse aquí en 2009.",
+         ca:"Melide és el centre de la comarca on va actuar la partida guerrillera de Curuxás i on va néixer el seu biògraf, Carlos Parrado. El llibre es va presentar aquí el 2009."},
+   extra:{gl:"Contido extra: itinerario pola vila e recursos sobre a guerrilla antifranquista.", ca:"Contingut extra: itinerari per la vila i recursos sobre la guerrilla antifranquista."}},
+  {id:"vilamor", name:"Vilamor (Toques)", lat:42.955, lng:-8.000, radius:500, approx:true,
+   short:{gl:"Os seus últimos anos e o seu enterro.", ca:"Els seus darrers anys i el seu enterrament."},
+   info:{gl:"Os últimos anos da súa vida transcorreron en Vilamor, parroquia de Toques. Morreu en 1967 por unha afección respiratoria derivada do seu traballo na mina, e foron os veciños quen lle deron sepultura.",
+         ca:"Els darrers anys de la seva vida van transcórrer a Vilamor, parròquia de Toques. Va morir el 1967 per una afecció respiratòria derivada de la feina a la mina, i van ser els veïns qui li van donar sepultura."},
+   extra:{gl:"Contido extra: homenaxe e recordos dos veciños.", ca:"Contingut extra: homenatge i records dels veïns."}},
+  {id:"freixeiro", name:"O Freixeiro (Palas de Rei)", lat:42.870, lng:-7.840, radius:500, approx:true,
+   short:{gl:"Lugar do seu falecemento, segundo a Wikipedia.", ca:"Lloc de la seva mort, segons la Viquipèdia."},
+   info:{gl:"A Wikipedia galega sitúa a súa morte, o 14 de maio de 1967, en O Freixeiro (Palas de Rei), mentres que a prensa menciona Vilamor como lugar dos seus últimos anos. Convén contrastalo co libro.",
+         ca:"La Viquipèdia gallega situa la seva mort, el 14 de maig de 1967, a O Freixeiro (Palas de Rei), mentre que la premsa esmenta Vilamor com a lloc dels seus darrers anys. Convé contrastar-ho amb el llibre."},
+   extra:{gl:"Contido extra: a completar.", ca:"Contingut extra: per completar."}}
+];
+// ================================================
+
+const DEFAULT_RADIUS = 100;
+const T = {
+ gl:{progress:(a,b)=>a+" de "+b+" visitados", next:"Seguinte parada", watchOff:"Activar seguimento", watchOn:"Seguimento activo",
+  visited:"Visitado", away:"a", editOn:"Modo edición", editOff:"Saír do modo edición",
+  none:"Aínda non capturaches coordenadas.", capLabel:"Coordenadas capturadas (cópiaas e envíamas para fixalas na app):",
+  reset:"Borrar o progreso das visitas", back:"← Todos os lugares", arrived:"Chegaches a este lugar.",
+  youAre:"Estás a", approx:"Localización aproximada.",
+  locked:r=>"O contido extra desbloquéase ao chegar (a menos de "+r+" m).",
+  drive:"Como chegar en coche", capture:"Gardar a miña localización aquí", simulate:"Simular chegada", measuring:"Medindo…",
+  noGeo:"O teu navegador non permite a xeolocalización.", precision:a=>"A precisión é de ±"+a+" m. Gardar igualmente?",
+  saved:a=>"Gardado (±"+a+" m).", noLoc:"Non se puido obter a localización.", noLocPerm:"Non se puido obter a túa localización. Revisa os permisos.",
+  offline:"Sen conexión: móstrase o mapa gardado."},
+ ca:{progress:(a,b)=>a+" de "+b+" visitats", next:"Propera parada", watchOff:"Activar seguiment", watchOn:"Seguiment actiu",
+  visited:"Visitat", away:"a", editOn:"Mode edició", editOff:"Sortir del mode edició",
+  none:"Encara no has capturat coordenades.", capLabel:"Coordenades capturades (copia-les i envia-me-les per fixar-les a l'app):",
+  reset:"Esborrar el progrés de les visites", back:"← Tots els llocs", arrived:"Has arribat a aquest lloc.",
+  youAre:"Ets a", approx:"Ubicació aproximada.",
+  locked:r=>"El contingut extra es desbloqueja en arribar (a menys de "+r+" m).",
+  drive:"Com arribar-hi en cotxe", capture:"Desar la meva ubicació aquí", simulate:"Simular arribada", measuring:"Mesurant…",
+  noGeo:"El teu navegador no permet la geolocalització.", precision:a=>"La precisió és de ±"+a+" m. Desar-ho igualment?",
+  saved:a=>"Desat (±"+a+" m).", noLoc:"No s'ha pogut obtenir la ubicació.", noLocPerm:"No s'ha pogut obtenir la teva ubicació. Revisa els permisos.",
+  offline:"Sense connexió: es mostra el mapa desat."}
+};
+const load=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v===null?d:v}catch(e){return d}};
+const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+let over=load("curuxas_coords",{}), visited=load("curuxas",[]), edit=load("curuxas_edit",false);
+let lang=load("curuxas_lang",null); if(lang!=="gl"&&lang!=="ca") lang=/^ca/i.test(navigator.language||"")?"ca":"gl";
+let userPos=null, selected=null, watchId=null, markers={}, me=null, arrivedNow=new Set();
+const $=id=>document.getElementById(id);
+const tr=k=>T[lang][k];
+const tx=o=>typeof o==="string"?o:(o[lang]||o.gl);
+const places=()=>PLACES.map(p=>Object.assign({},p,over[p.id]||{}));
+const get=id=>places().find(p=>p.id===id);
+const fmt=d=>d<1000?Math.round(d)+" m":(d/1000).toFixed(1).replace(".",",")+" km";
+
+const map=L.map("map").setView([42.91,-8.01],11);
+map.attributionControl.setPrefix(false);
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(map);
+
+function dist(a,b,c,d){const R=6371000,r=x=>x*Math.PI/180,dLa=r(c-a),dLo=r(d-b);
+  const h=Math.sin(dLa/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
+const dTo=p=>userPos?dist(userPos.lat,userPos.lng,p.lat,p.lng):null;
+
+function drawMarkers(fit){
+  Object.values(markers).forEach(m=>m.remove()); markers={};
+  places().forEach((p,i)=>{
+    const cls="pin"+(visited.includes(p.id)?" visited":"")+(selected===p.id?" sel":"");
+    const ic=L.divIcon({className:"",html:'<div class="'+cls+'">'+(i+1)+'</div>',iconSize:[28,28],iconAnchor:[14,14]});
+    markers[p.id]=L.marker([p.lat,p.lng],{icon:ic,title:tx(p.name)}).addTo(map).on("click",()=>showDetail(p.id));
+  });
+  $("progress").textContent=tr("progress")(visited.length,PLACES.length);
+  if(fit) map.fitBounds(places().map(p=>[p.lat,p.lng]),{padding:[50,50]});
+}
+function nextStop(){return places().find(p=>!visited.includes(p.id))||places()[0];}
+
+function showList(){
+  selected=null; drawMarkers();
+  const el=$("panel"); el.innerHTML="";
+  const top=document.createElement("div"); top.className="btns";
+  const nb=document.createElement("button"); nb.className="primary"; nb.textContent=tr("next");
+  nb.onclick=()=>showDetail(nextStop().id);
+  const wb=document.createElement("button"); wb.id="watch"; wb.textContent=watchId===null?tr("watchOff"):tr("watchOn");
+  if(watchId!==null) wb.className="on"; wb.onclick=toggleWatch;
+  top.append(nb,wb); el.append(top);
+  places().forEach((p,i)=>{
+    const r=document.createElement("div"); r.className="row"; r.tabIndex=0;
+    const d=dTo(p), v=visited.includes(p.id);
+    r.innerHTML='<div class="num'+(v?" visited":"")+'">'+(i+1)+'</div><div><b></b><small></small></div>';
+    r.querySelector("b").textContent=tx(p.name);
+    r.querySelector("small").textContent=(v?tr("visited")+" · ":"")+(d!==null?tr("away")+" "+fmt(d):tx(p.short));
+    r.onclick=()=>showDetail(p.id); r.onkeydown=e=>{if(e.key==="Enter")showDetail(p.id)};
+    el.append(r);
+  });
+  const ed=document.createElement("div"); ed.style.marginTop="12px";
+  const eb=document.createElement("button"); eb.textContent=edit?tr("editOff"):tr("editOn");
+  eb.onclick=()=>{edit=!edit;save("curuxas_edit",edit);showList();}; ed.append(eb);
+  el.append(ed);
+  if(edit){
+    const ta=document.createElement("textarea"); ta.readOnly=true;
+    ta.value=Object.keys(over).length?JSON.stringify(over,null,1):tr("none");
+    const lbl=document.createElement("div"); lbl.className="meta"; lbl.style.marginTop="10px";
+    lbl.textContent=tr("capLabel");
+    const rs=document.createElement("button"); rs.textContent=tr("reset"); rs.style.marginTop="8px";
+    rs.onclick=()=>{visited=[];arrivedNow.clear();save("curuxas",visited);showList();};
+    el.append(lbl,ta,rs);
+  }
+}
+
+function showDetail(id,arrival){
+  selected=id; const p=get(id); drawMarkers();
+  const d=dTo(p), done=visited.includes(id), dest=p.lat+","+p.lng;
+  const el=$("panel"); el.innerHTML="";
+  const back=document.createElement("button"); back.className="back"; back.textContent=tr("back"); back.onclick=showList; el.append(back);
+  if(arrival){const a=document.createElement("div");a.className="box arrive";a.textContent=tr("arrived");el.append(a);}
+  const h=document.createElement("h2"); h.textContent=tx(p.name);
+  const m=document.createElement("div"); m.className="meta";
+  m.textContent=tx(p.short)+(d!==null?" "+tr("youAre")+" "+fmt(d)+".":"")+(p.approx?" "+tr("approx"):"");
+  const t=document.createElement("p"); t.textContent=tx(p.info);
+  el.append(h,m,t);
+  const u=document.createElement("div"); u.className="box";
+  u.textContent=done?tx(p.extra):tr("locked")(p.radius||DEFAULT_RADIUS);
+  el.append(u);
+  const b=document.createElement("div"); b.className="btns";
+  const link=(txt,href,cls)=>{const a=document.createElement("a");a.className="btn "+(cls||"");a.textContent=txt;a.href=href;a.target="_blank";a.rel="noopener";return a;};
+  b.append(link(tr("drive"),"https://www.google.com/maps/dir/?api=1&destination="+dest+"&travelmode=driving","primary"),
+           link("Waze","https://waze.com/ul?ll="+dest+"&navigate=yes"),
+           link("Apple Maps","https://maps.apple.com/?daddr="+dest+"&dirflg=d"));
+  el.append(b);
+  if(edit){
+    const c=document.createElement("div"); c.className="btns";
+    const cap=document.createElement("button"); cap.textContent=tr("capture"); cap.onclick=()=>capture(id,cap);
+    const sim=document.createElement("button"); sim.textContent=tr("simulate");
+    sim.onclick=()=>{if(!visited.includes(id)){visited.push(id);save("curuxas",visited);}showDetail(id,true);};
+    c.append(cap,sim); el.append(c);
+  }
+  map.setView([p.lat,p.lng],Math.max(map.getZoom(),14));
+}
+
+function capture(id,btn){
+  if(!navigator.geolocation){alert(tr("noGeo"));return;}
+  btn.textContent=tr("measuring");
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const acc=Math.round(pos.coords.accuracy);
+    if(acc>30&&!confirm(tr("precision")(acc))){btn.textContent=tr("capture");return;}
+    over[id]={lat:+pos.coords.latitude.toFixed(6),lng:+pos.coords.longitude.toFixed(6),radius:DEFAULT_RADIUS,approx:false,acc:acc};
+    save("curuxas_coords",over); showDetail(id); alert(tr("saved")(acc));
+  },()=>{btn.textContent=tr("capture");alert(tr("noLoc"));},{enableHighAccuracy:true,timeout:25000,maximumAge:0});
+}
+
+function onPos(pos){
+  userPos={lat:pos.coords.latitude,lng:pos.coords.longitude};
+  if(!me) me=L.circleMarker([userPos.lat,userPos.lng],{radius:8,color:"#4a3524",fillColor:"#d9a441",fillOpacity:1}).addTo(map);
+  else me.setLatLng([userPos.lat,userPos.lng]);
+  const hit=places().find(p=>!arrivedNow.has(p.id)&&dTo(p)<=(p.radius||DEFAULT_RADIUS));
+  if(hit){
+    arrivedNow.add(hit.id);
+    if(!visited.includes(hit.id)){visited.push(hit.id);save("curuxas",visited);}
+    if(navigator.vibrate) navigator.vibrate([200,100,200]);
+    showDetail(hit.id,true);
+  } else if(selected) showDetail(selected); else showList();
+}
+function toggleWatch(){
+  if(!navigator.geolocation){alert(tr("noGeo"));return;}
+  if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null;showList();return;}
+  watchId=navigator.geolocation.watchPosition(onPos,()=>{alert(tr("noLocPerm"));watchId=null;showList();},
+    {enableHighAccuracy:true,maximumAge:5000});
+  showList();
+}
+
+// ---- Idioma ----
+function applyLang(){
+  document.documentElement.lang=lang;
+  $("offline").textContent=tr("offline");
+  document.querySelectorAll("#lang button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.l===lang)));
+}
+function setLang(l){lang=l;save("curuxas_lang",l);applyLang();if(selected)showDetail(selected);else showList();}
+[["gl","GZ","Galego"],["ca","CA","Català"]].forEach(([l,txt,name])=>{
+  const b=document.createElement("button"); b.dataset.l=l; b.textContent=txt; b.setAttribute("aria-label",name); b.title=name;
+  b.onclick=()=>setLang(l); $("lang").append(b);
+});
+applyLang(); drawMarkers(true); showList();
+
+const offBar=$("offline"), netState=()=>{offBar.hidden=navigator.onLine;};
+addEventListener("online",netState);addEventListener("offline",netState);netState();
+if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(e=>console.warn("SW",e)));}
+</script>
+</body>
+</html>

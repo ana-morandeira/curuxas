@@ -1,0 +1,15 @@
+{
+  "name": "Ruta Curuxás",
+  "short_name": "Curuxás",
+  "description": "Ruta literaria interactiva polos lugares do libro Curuxás · Ruta literària interactiva pels llocs del llibre Curuxás.",
+  "lang": "gl",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3ead3",
+  "theme_color": "#efe4cb",
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}
